@@ -1,63 +1,78 @@
-# aria-cc-plugin
+# aria-coder-buddy
 
-Claude Code plugin that bridges CC session lifecycle events to the **Aria desktop avatar** running on `http://127.0.0.1:8000` (the `aria-agent` server).
+Bridge AI coding agents (Claude Code, OpenAI Codex, Kimi, ...) to the **Aria** desktop avatar — your VRM character reacts to your coding session in real time. Type a prompt, watch her think; finish a task, watch her cheer; idle too long, watch her wander off.
 
-The plugin is intentionally minimal: declarative `hooks/hooks.json` + a couple of bash scripts. No Node, no SDK. CC fires hook events → bash reshapes the JSON → `curl POST /events/cc`. The avatar reacts.
+## Status
 
-## What it does
+| Agent | Path | Status |
+|---|---|---|
+| Claude Code | `plugins/cc/` | ✅ working (v0.1.0) |
+| OpenAI Codex CLI | `plugins/codex/` | ⏳ planned |
+| Kimi / Moonshot | `plugins/kimi/` | ⏳ planned |
 
-- **Hooks**: `SessionStart` / `UserPromptSubmit` / `Stop` / `StopFailure` / `PreToolUse` / `PostToolUse` / `Notification` / `PermissionRequest` → POST event metadata to aria-agent.
-- **Slash commands**:
-  - `/aria-wake` — wake the avatar (one-shot wake event)
-  - `/aria-sleep` — explicit sleep (CC has no SessionEnd hook, so this is the only way)
-  - `/aria-mood <happy|tired|focused|...>` — manual mood override
-- **Bootstrap**: `SessionStart` runs `bin/ensure-aria.sh` — probes `:8000`; if no aria-agent, spawns it detached.
+Each subdirectory is a self-contained plugin for that agent's plugin format. They all POST to the same backend — the `aria-agent` server (separate Python service in the [aria](https://github.com/LucasLawliet/aria) repo) on `http://127.0.0.1:8000`.
+
+## How the parts fit
+
+```
+┌─────────────┐  hook events    ┌─────────────┐  WebSocket    ┌──────────────┐
+│ AI agent    │ ──────────────► │ aria-agent  │ ────────────► │ Aria desktop │
+│ (CC, Codex, │  POST /events/* │ (FastAPI    │  behavior     │ (Unity +     │
+│  Kimi, ...) │                 │  on :8000)  │  command      │  Flutter)    │
+└─────────────┘                 └─────────────┘               └──────────────┘
+       ▲                              │
+       │ slash commands               │ HTTPS (token from CC OAuth or env)
+       │ (user-triggered)             ▼
+                              ┌──────────────────┐
+                              │ Anthropic API    │
+                              │ (random speech)  │
+                              └──────────────────┘
+```
+
+`aria-agent` is the brain: it tracks companion state, runs a behavior engine, decides what the avatar should do, and pushes commands over WebSocket. Each plugin in this repo is a thin adapter that forwards its host agent's events.
 
 ## Privacy
 
-Only event **metadata** is sent — `kind` / `outcome` / `tool_name` / `notification_kind`. Prompts and tool inputs/outputs **are never forwarded**.
+Plugins forward **event metadata only** — `kind` / `outcome` / `tool_name` / `notification_kind`. Prompts, tool inputs, and tool outputs are **never sent**.
 
-## Install (local, dev)
+## Install (local dev)
+
+Pick the plugin matching your agent:
 
 ```bash
-git clone <this-repo> ~/Documents/Projects/aria-cc-plugin
-# In a CC session:
-/plugin add /Users/lucas/Documents/Projects/aria-cc-plugin
+git clone https://github.com/LucasLawliet/aria-coder-buddy ~/Documents/Projects/aria-coder-buddy
+```
+
+**Claude Code**:
+```
+/plugin add ~/Documents/Projects/aria-coder-buddy/plugins/cc
 ```
 
 Or wire it via `~/.claude/settings.json`:
-
 ```json
 {
-  "plugins": [
-    "/Users/lucas/Documents/Projects/aria-cc-plugin"
-  ]
+  "plugins": ["~/Documents/Projects/aria-coder-buddy/plugins/cc"]
 }
 ```
 
-## Requirements
-
-- `bash`, `curl`, `jq` on `PATH`
-- `aria-agent` reachable at `http://127.0.0.1:8000` (or spawnable via `bin/ensure-aria.sh`)
+See [`plugins/cc/README.md`](plugins/cc/README.md) for the full Claude Code setup, hook list, and slash commands.
 
 ## Layout
 
 ```
-.claude-plugin/plugin.json   manifest
-hooks/hooks.json              CC hook → bin/post-event.sh dispatch
-commands/                     /aria-wake, /aria-sleep, /aria-mood
-bin/post-event.sh             reshape stdin JSON → curl POST /events/cc, 200ms timeout
-bin/ensure-aria.sh            SessionStart bootstrap
+aria-coder-buddy/
+├── plugins/
+│   └── cc/                # Claude Code plugin (declarative JSON + bash)
+├── README.md              # this file
+└── .gitignore
 ```
 
-## Troubleshooting
+Future plugins (Codex, Kimi) will land under `plugins/<agent>/`. Shared infrastructure (`bin/post-event.sh` / `bin/ensure-aria.sh` style logic) lives inside each plugin for now — when the second plugin lands we'll factor out a `lib/` directory.
 
-- **avatar not reacting**: `curl http://127.0.0.1:8000/health` — if no response, run `bin/ensure-aria.sh` manually
-- **hook not firing**: tail `~/.claude/logs/*` and check `bin/post-event.sh` is executable (`chmod +x bin/*.sh`)
-- **rapid timeouts**: aria-agent should respond `204` in < 50ms; `--max-time 0.2` in post-event.sh fails silently if slower
+## License
 
-## Heartbeat strategy
+MIT (see individual plugin manifests).
 
-This plugin does **not** send a periodic heartbeat. aria-agent uses *Strategy A* — any cc event resets its idle timer. CC has no scheduled-tick hook, and a daemon would be brittle. When the user is idle, no events fire → avatar drifts into `relax` / `session_lost` naturally.
+## Related
 
-See `aria/docs/aria-cc-buddy/spec.md` § 5.2 for the rationale.
+- [aria](https://github.com/LucasLawliet/aria) — desktop avatar, `aria-agent` server, behavior engine spec (`docs/aria-cc-buddy/spec.md`)
