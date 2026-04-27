@@ -1,0 +1,12 @@
+{
+  "name": "aria-cc-plugin",
+  "version": "0.1.0",
+  "description": "Bridge Claude Code session events to the Aria desktop avatar (aria-agent on :8000).",
+  "author": {
+    "name": "Lucas Lu",
+    "email": "real.lawlietlu@gmail.com"
+  },
+  "homepage": "https://github.com/LucasLawliet/aria-cc-plugin",
+  "license": "MIT",
+  "keywords": ["aria", "avatar", "companion", "buddy"]
+}
