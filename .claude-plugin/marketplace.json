@@ -1,0 +1,22 @@
+{
+  "name": "aria-coder-buddy",
+  "owner": {
+    "name": "Lucas Lu",
+    "email": "real.lawlietlu@gmail.com"
+  },
+  "description": "Bridges AI coding agents (Claude Code, OpenAI Codex, Kimi) to the Aria desktop avatar.",
+  "plugins": [
+    {
+      "name": "aria-cc-plugin",
+      "source": "./plugins/cc",
+      "description": "Claude Code plugin that forwards CC session events (UserPromptSubmit, Stop, PreToolUse, etc.) to aria-agent so the desktop avatar reacts in real time.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Lucas Lu",
+        "email": "real.lawlietlu@gmail.com"
+      },
+      "homepage": "https://github.com/LucasLawliet/aria-coder-buddy",
+      "keywords": ["aria", "avatar", "companion", "buddy"]
+    }
+  ]
+}
