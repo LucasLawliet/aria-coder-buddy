@@ -12,23 +12,44 @@ The plugin is intentionally minimal: declarative `hooks/hooks.json` + a couple o
 - **Slash commands**:
   - `/aria-wake` — wake the avatar (one-shot wake event)
   - `/aria-sleep` — explicit sleep (CC has no SessionEnd hook, so this is the only way)
-  - `/aria-mood <happy|tired|focused|...>` — manual mood override (placeholder; aria-agent doesn't yet have a `mood` reaction wired)
 - **Bootstrap**: `SessionStart` runs `bin/ensure-aria.sh` — probes `:8000`; if no aria-agent, spawns it detached.
 
 ## Privacy
 
 Only event **metadata** is sent — `kind` / `outcome` / `tool_name` / `notification_kind`. Prompts and tool inputs/outputs **are never forwarded**.
 
-## Install
+## Quick start
 
-**Recommended — via marketplace**:
+**1. Install the plugin (in a Claude Code session)**:
 
 ```
 /plugin marketplace add LucasLawliet/aria-coder-buddy
 /plugin install aria-cc-plugin@aria-coder-buddy
 ```
 
-**Alternative — local clone**:
+**2. Make sure `aria-agent` is running on `:8000`**.
+
+The easiest path — set `ARIA_AGENT_DIR` so the plugin spawns it for you:
+
+```bash
+# In your shell profile (~/.zshrc or ~/.bashrc):
+export ARIA_AGENT_DIR=/path/to/aria/Server
+```
+
+Next CC session, `SessionStart` runs `bin/ensure-aria.sh` → probes `:8000` → if down, `cd $ARIA_AGENT_DIR && nohup uv run aria-agent start &`. Logs land in `/tmp/aria-agent.log`.
+
+Or start it manually:
+```bash
+cd /path/to/aria/Server && uv run aria-agent start
+```
+
+**3. Use Claude Code normally** — every prompt, tool use, and stop fires hooks → POSTs to `:8000`. The avatar reacts. No further action needed.
+
+**4. Slash commands** (when you want explicit control):
+- `/aria-wake` — force-wake the avatar (also fires automatically at SessionStart)
+- `/aria-sleep` — let her go to sleep (avatar plays farewell, process stays warm)
+
+## Alternative install (local clone, skip marketplace)
 
 ```bash
 git clone https://github.com/LucasLawliet/aria-coder-buddy ~/Documents/Projects/aria-coder-buddy
@@ -36,14 +57,9 @@ git clone https://github.com/LucasLawliet/aria-coder-buddy ~/Documents/Projects/
 /plugin add ~/Documents/Projects/aria-coder-buddy/plugins/cc
 ```
 
-Or wire it via `~/.claude/settings.json`:
-
+Or in `~/.claude/settings.json`:
 ```json
-{
-  "plugins": [
-    "~/Documents/Projects/aria-coder-buddy/plugins/cc"
-  ]
-}
+{ "plugins": ["~/Documents/Projects/aria-coder-buddy/plugins/cc"] }
 ```
 
 ## Configuration
@@ -65,7 +81,7 @@ Both env vars are optional:
 ```
 .claude-plugin/plugin.json   manifest
 hooks/hooks.json              CC hook → bin/post-event.sh dispatch
-commands/                     /aria-wake, /aria-sleep, /aria-mood
+commands/                     /aria-wake, /aria-sleep
 bin/post-event.sh             reshape stdin JSON → curl POST /events/cc, 200ms timeout
 bin/ensure-aria.sh            SessionStart bootstrap
 ```
