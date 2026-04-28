@@ -12,7 +12,7 @@ Bridge AI coding agents (Claude Code, OpenAI Codex, Kimi, ...) to the **Aria** d
 | OpenAI Codex CLI | `plugins/codex/` | ⏳ planned |
 | Kimi / Moonshot | `plugins/kimi/` | ⏳ planned |
 
-Each subdirectory is a self-contained plugin for that agent's plugin format. They all POST to the same backend — the `aria-agent` server (separate Python service in the [aria](https://github.com/LucasLawliet/aria) repo) on `http://127.0.0.1:8000`.
+Each subdirectory is a self-contained plugin for that agent's plugin format. They all POST to the same backend — the `aria-agent` server, a separate Python service shipped with the **Aria desktop app** (TBD — public download link will be published here once available).
 
 ## How the parts fit
 
@@ -39,7 +39,30 @@ Plugins forward **event metadata only** — `kind` / `outcome` / `tool_name` / `
 
 ## Install
 
-This repo is itself a Claude Code **plugin marketplace** (see `.claude-plugin/marketplace.json`). The recommended install path:
+### One-shot (paste this into Claude Code)
+
+The fastest path — paste this prompt into a Claude Code session and it'll walk you through:
+
+```
+Help me install aria-coder-buddy plugin (Aria desktop avatar bridge).
+
+The plugin lives at https://github.com/LucasLawliet/aria-coder-buddy and ships
+through Claude Code's marketplace mechanism. Steps:
+
+1. Tell me which two slash commands I should run inside CC to install:
+   one to add the marketplace LucasLawliet/aria-coder-buddy, and one to
+   install the aria-cc-plugin from it.
+2. After I report back, verify the plugin landed by checking
+   ~/.claude/settings.json or the plugin list.
+3. Ask me where the Aria desktop app is installed (it bundles aria-agent;
+   may not be publicly released yet — if so, just skip this step). If
+   I have it, append `export ARIA_AGENT_DIR=<path>` to my shell rc.
+4. Tell me what to expect on the next CC session start.
+```
+
+CC can't trigger its own slash commands programmatically, so steps 1+2 still need you to type them — but everything else (verification, env setup) it handles for you.
+
+### Manual
 
 ```
 /plugin marketplace add LucasLawliet/aria-coder-buddy
@@ -60,7 +83,7 @@ git clone https://github.com/LucasLawliet/aria-coder-buddy ~/Documents/Projects/
 /plugin add ~/Documents/Projects/aria-coder-buddy/plugins/cc
 ```
 
-You also need `aria-agent` running locally on `:8000` — see the [aria repo](https://github.com/LucasLawliet/aria) for setup. Set `ARIA_AGENT_DIR=/path/to/aria/Server` and the plugin's `SessionStart` hook will spawn it for you.
+You also need `aria-agent` running locally on `:8000` — it ships with the Aria desktop app (TBD). Set `ARIA_AGENT_DIR=<aria-app-Server-dir>` and the plugin's `SessionStart` hook will spawn it for you.
 
 See [`plugins/cc/README.md`](plugins/cc/README.md) for the full Claude Code setup, hook list, and slash commands.
 
@@ -84,4 +107,4 @@ MIT (see individual plugin manifests).
 
 ## Related
 
-- [aria](https://github.com/LucasLawliet/aria) — desktop avatar, `aria-agent` server, behavior engine spec (`docs/aria-cc-buddy/spec.md`)
+- **Aria desktop app** — VRM character + `aria-agent` server + behavior engine. Public download TBD.
