@@ -20,8 +20,20 @@ if [ ! -t 0 ]; then
 fi
 
 build_payload() {
-  if [ -z "$INPUT" ]; then echo '{}'; return; fi
+  if [ -z "$INPUT" ]; then
+    # No stdin (rare). For wake we still want cwd from $PWD.
+    if [ "$KIND" = "wake" ]; then
+      echo "{\"cwd\":\"$PWD\"}"
+    else
+      echo '{}'
+    fi
+    return
+  fi
   case "$KIND" in
+    wake)
+      # SessionStart stdin carries .cwd per Anthropic hook spec; fallback to $PWD.
+      echo "$INPUT" | jq -c --arg pwd "$PWD" '{cwd: (.cwd // $pwd)}' 2>/dev/null \
+        || echo "{\"cwd\":\"$PWD\"}" ;;
     stop)
       echo "$INPUT" | jq -c '{outcome: "success", duration_ms: (.duration_ms // null)}' 2>/dev/null \
         || echo '{"outcome":"success"}' ;;
