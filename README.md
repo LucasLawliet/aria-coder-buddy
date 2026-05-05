@@ -35,7 +35,9 @@ Each subdirectory is a self-contained plugin for that agent's plugin format. The
 
 ## Privacy
 
-Plugins forward **event metadata only** — `kind` / `outcome` / `tool_name` / `notification_kind`. Prompts, tool inputs, and tool outputs are **never sent**.
+Plugins forward **event metadata** (`kind` / `outcome` / `tool_name` / `notification_kind`) plus, on `Stop` / `StopFailure`, the **local path** to the agent's transcript file so `aria-agent` (also running on your machine) can summarize what just happened in the avatar's chat bubble. The transcript itself never leaves your box over the wire — only the path is sent in-process to a localhost service. Prompts and tool inputs/outputs are **never** POSTed to a remote server by the plugins themselves.
+
+If you do not run the Aria desktop app, port `8000` has no listener and every plugin POST silently fails — **zero token cost** when the avatar is offline.
 
 ## Install
 

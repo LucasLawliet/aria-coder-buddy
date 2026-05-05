@@ -10,13 +10,15 @@ Claude Code plugin, 把 CC session 生命周期事件桥接到运行在 `http://
 
 - **Hook**: `SessionStart` / `UserPromptSubmit` / `Stop` / `StopFailure` / `PreToolUse` / `PostToolUse` / `Notification` / `PermissionRequest` → POST 事件元数据给 aria-agent.
 - **Slash command**:
-  - `/aria-wake` — 唤醒头像 (一次性 wake 事件)
+  - `/aria-awake` — Aria.app 没开就拉起来, 然后发 wake 事件
   - `/aria-sleep` — 显式 sleep (CC 没 SessionEnd hook, 这是唯一显式入眠方式)
 - **启动**: `SessionStart` 跑 `bin/ensure-aria.sh` — 探测 `:8000`; 如果 aria-agent 不在则后台 spawn.
 
 ## 隐私
 
-只送事件**元数据** — `kind` / `outcome` / `tool_name` / `notification_kind`. 你的 prompt、工具输入输出**永不上送**.
+Plugin 上送的是事件**元数据** (`kind` / `outcome` / `tool_name` / `notification_kind`); `Stop` / `StopFailure` 时还会带 CC transcript `.jsonl` 的**本地路径**. transcript 文件本身不离开你的机器 — `aria-agent` (也跑在本地) 自己读, 把 tail 喂给 Anthropic API 让 Aria 角色说一句贴当前任务的话. 你的 prompt、工具输入输出 plugin 自己不直接 POST.
+
+如果不开 Aria 桌面应用, `:8000` 没人监听 — plugin 所有 POST 都 `--max-time 0.2` 静默超时, **不消耗任何 token**.
 
 ## 快速开始
 
@@ -46,7 +48,7 @@ cd /path/to/aria/Server && uv run aria-agent start
 **3. 正常用 Claude Code** — 每次 prompt / tool / stop 都触发 hook → POST 到 `:8000`. 头像自动反应, 不需要做别的.
 
 **4. Slash command** (需要手动控制时):
-- `/aria-wake` — 强制唤醒头像 (SessionStart 时已经自动触发一次)
+- `/aria-awake` — Aria.app 没开就拉起来, 然后发 wake 事件 (SessionStart 时已经自动跑一次)
 - `/aria-sleep` — 让她去睡 (头像播道别动画, 进程不退出)
 
 ## 备选安装 (本地 clone, 不走 marketplace)
@@ -81,7 +83,7 @@ git clone https://github.com/LucasLawliet/aria-coder-buddy ~/Documents/Projects/
 ```
 .claude-plugin/plugin.json   manifest
 hooks/hooks.json              CC hook → bin/post-event.sh 调度
-commands/                     /aria-wake, /aria-sleep
+commands/                     /aria-awake, /aria-sleep
 bin/post-event.sh             读 stdin JSON → curl POST /events/cc, 200ms timeout
 bin/ensure-aria.sh            SessionStart 启动脚本
 ```

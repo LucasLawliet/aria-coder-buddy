@@ -10,13 +10,15 @@ The plugin is intentionally minimal: declarative `hooks/hooks.json` + a couple o
 
 - **Hooks**: `SessionStart` / `UserPromptSubmit` / `Stop` / `StopFailure` / `PreToolUse` / `PostToolUse` / `Notification` / `PermissionRequest` → POST event metadata to aria-agent.
 - **Slash commands**:
-  - `/aria-wake` — wake the avatar (one-shot wake event)
+  - `/aria-awake` — launches Aria.app if not running, then fires the wake event
   - `/aria-sleep` — explicit sleep (CC has no SessionEnd hook, so this is the only way)
 - **Bootstrap**: `SessionStart` runs `bin/ensure-aria.sh` — probes `:8000`; if no aria-agent, spawns it detached.
 
 ## Privacy
 
-Only event **metadata** is sent — `kind` / `outcome` / `tool_name` / `notification_kind`. Prompts and tool inputs/outputs **are never forwarded**.
+Plugin sends event **metadata** (`kind` / `outcome` / `tool_name` / `notification_kind`) and on `Stop` / `StopFailure` also forwards the **path** to CC's transcript `.jsonl`. The transcript file itself stays on your machine — `aria-agent` (also local) reads it to give the avatar a context-aware "what just happened" line via the Anthropic API. Prompts and tool inputs/outputs are never POSTed over the wire by the plugin itself.
+
+If you do not run the Aria desktop app, port `8000` has no listener: every plugin POST hits `--max-time 0.2` and silently fails — **zero token cost** when the avatar is offline.
 
 ## Quick start
 
@@ -46,7 +48,7 @@ cd /path/to/aria/Server && uv run aria-agent start
 **3. Use Claude Code normally** — every prompt, tool use, and stop fires hooks → POSTs to `:8000`. The avatar reacts. No further action needed.
 
 **4. Slash commands** (when you want explicit control):
-- `/aria-wake` — force-wake the avatar (also fires automatically at SessionStart)
+- `/aria-awake` — launch Aria.app if it's not running, then wake the avatar (SessionStart already does this once at the start of every session)
 - `/aria-sleep` — let her go to sleep (avatar plays farewell, process stays warm)
 
 ## Alternative install (local clone, skip marketplace)
@@ -81,7 +83,7 @@ Both env vars are optional:
 ```
 .claude-plugin/plugin.json   manifest
 hooks/hooks.json              CC hook → bin/post-event.sh dispatch
-commands/                     /aria-wake, /aria-sleep
+commands/                     /aria-awake, /aria-sleep
 bin/post-event.sh             reshape stdin JSON → curl POST /events/cc, 200ms timeout
 bin/ensure-aria.sh            SessionStart bootstrap
 ```

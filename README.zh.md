@@ -37,7 +37,9 @@
 
 ## 隐私
 
-Plugin 只转发**事件元数据** — `kind` / `outcome` / `tool_name` / `notification_kind`. 你的 prompt、工具的输入输出**永不上送**.
+Plugin 转发的是**事件元数据** (`kind` / `outcome` / `tool_name` / `notification_kind`); `Stop` / `StopFailure` 时还会带 agent transcript 文件的**本地路径**, 让同样跑在你机器上的 `aria-agent` 自己读, 给 avatar 的聊天气泡生一句贴当前任务的话. transcript 文件本身只在本机进程间传, 不会被 plugin 自己 POST 到远端. 你的 prompt、工具输入输出 plugin 自己**永不上送**.
+
+如果不开 Aria 桌面应用, `:8000` 没人监听 — plugin 所有 POST 都静默超时, **不消耗任何 token**.
 
 ## 安装
 
