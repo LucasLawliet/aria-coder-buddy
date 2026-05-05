@@ -35,10 +35,21 @@ build_payload() {
       echo "$INPUT" | jq -c --arg pwd "$PWD" '{cwd: (.cwd // $pwd)}' 2>/dev/null \
         || echo "{\"cwd\":\"$PWD\"}" ;;
     stop)
-      echo "$INPUT" | jq -c '{outcome: "success", duration_ms: (.duration_ms // null)}' 2>/dev/null \
+      # transcript_path lets aria-agent tail the .jsonl and summarize this turn
+      # in the Flutter chat bubble (CC POV speech) instead of generic fallbacks.
+      echo "$INPUT" | jq -c '{
+          outcome: "success",
+          duration_ms: (.duration_ms // null),
+          transcript_path: (.transcript_path // "")
+        }' 2>/dev/null \
         || echo '{"outcome":"success"}' ;;
     stop_failure)
-      echo "$INPUT" | jq -c '{outcome: "error", duration_ms: (.duration_ms // null), error_summary: (.error // null)}' 2>/dev/null \
+      echo "$INPUT" | jq -c '{
+          outcome: "error",
+          duration_ms: (.duration_ms // null),
+          error_summary: (.error // null),
+          transcript_path: (.transcript_path // "")
+        }' 2>/dev/null \
         || echo '{"outcome":"error"}' ;;
     pre_tool_use|post_tool_use)
       echo "$INPUT" | jq -c '{tool_name: (.tool_name // "unknown")}' 2>/dev/null \
