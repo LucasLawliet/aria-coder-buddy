@@ -1,8 +1,10 @@
 ---
 description: Sleep the Aria desktop avatar (avatar plays farewell, process stays warm)
-allowed-tools: Bash(curl:*)
+allowed-tools: Bash
 ---
 
-!`curl -s --max-time 0.2 -X POST "${ARIA_AGENT_URL:-http://127.0.0.1:8000}/events/cc" -H 'Content-Type: application/json' -d '{"kind":"sleep","payload":{}}' >/dev/null 2>&1 ; echo "sleep dispatched"`
+Run this single command via the Bash tool, then reply with only the command's output verbatim and nothing else:
 
-Aria avatar sleep event sent. No response needed — just acknowledge briefly.
+```bash
+"${CLAUDE_PLUGIN_ROOT}/bin/sleep.sh"
+```

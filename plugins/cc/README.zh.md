@@ -83,9 +83,11 @@ git clone https://github.com/LucasLawliet/aria-coder-buddy ~/Documents/Projects/
 ```
 .claude-plugin/plugin.json   manifest
 hooks/hooks.json              CC hook → bin/post-event.sh 调度
-commands/                     /aria-awake, /aria-sleep
+commands/                     /aria-awake, /aria-sleep (skill 格式)
 bin/post-event.sh             读 stdin JSON → curl POST /events/cc, 200ms timeout
-bin/ensure-aria.sh            SessionStart 启动脚本
+bin/ensure-aria.sh            SessionStart 启动脚本 (探 :8000, 拉起 Aria.app)
+bin/awake.sh                  /aria-awake 入口: ensure-aria + POST wake
+bin/sleep.sh                  /aria-sleep 入口: POST sleep
 ```
 
 ## 排查

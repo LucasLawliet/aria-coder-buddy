@@ -83,9 +83,11 @@ Both env vars are optional:
 ```
 .claude-plugin/plugin.json   manifest
 hooks/hooks.json              CC hook → bin/post-event.sh dispatch
-commands/                     /aria-awake, /aria-sleep
+commands/                     /aria-awake, /aria-sleep (skill-format)
 bin/post-event.sh             reshape stdin JSON → curl POST /events/cc, 200ms timeout
-bin/ensure-aria.sh            SessionStart bootstrap
+bin/ensure-aria.sh            SessionStart bootstrap (probe :8000, launch Aria.app)
+bin/awake.sh                  /aria-awake: ensure-aria.sh + POST wake event
+bin/sleep.sh                  /aria-sleep: POST sleep event
 ```
 
 ## Troubleshooting
