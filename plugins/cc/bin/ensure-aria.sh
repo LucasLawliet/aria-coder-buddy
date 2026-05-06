@@ -15,9 +15,14 @@ set -u
 
 ARIA_BUNDLE_ID="${ARIA_BUNDLE_ID:-com.sensebeing.aria}"
 
-# 直接问 macOS LaunchServices "Aria GUI 在不在" — 比 :8000 端口探测可靠.
-# (旧逻辑只 probe 端口, 但 zombie aria-agent 进程不带 GUI 也会占 :8000 →
-# skip launch → 用户看到 "Aria 不在".) osascript 不在 PATH 时降级为 0/1 noop.
+# 检查 Aria 是否在跑. 顺序 (从准到弱):
+# 1. pgrep Unity binary path — Aria.app 内嵌 Unity 进程在跑 = Aria 真活着
+#    (osascript 'is running' 在 app 半死状态 e.g. WS 断时会返回 false 误杀)
+# 2. fallback: osascript LaunchServices (Unity 路径未匹配时兜底)
+# 3. 都 false → fall through 到 launch path
+if pgrep -f "AriaFlutterBridge.app/Contents/MacOS/Arai" >/dev/null 2>&1; then
+  exit 0
+fi
 if command -v osascript >/dev/null 2>&1; then
   APP_RUNNING="$(osascript -e 'application id "'"$ARIA_BUNDLE_ID"'" is running' 2>/dev/null || echo "")"
   if [ "$APP_RUNNING" = "true" ]; then
