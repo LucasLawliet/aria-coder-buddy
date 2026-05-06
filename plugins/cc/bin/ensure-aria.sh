@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SessionStart bootstrap: 检查 :8000 (aria-agent), 没就启动 Aria.app.
+# SessionStart bootstrap: 检查 Aria GUI 是否在前台, 没就启动 Aria.app.
 # Aria.app 启动时**自身会 spawn aria-agent + Unity binary** (launcher 内部逻辑),
 # 不要让 plugin 重复 spawn aria-agent.
 #
@@ -13,12 +13,16 @@
 # Usage (from hooks.json): ${CLAUDE_PLUGIN_ROOT}/bin/ensure-aria.sh
 set -u
 
-PORT="${ARIA_AGENT_PORT:-8000}"
 ARIA_BUNDLE_ID="${ARIA_BUNDLE_ID:-com.sensebeing.aria}"
 
-# Probe via bash builtin /dev/tcp — 已在跑就不动
-if (echo > /dev/tcp/127.0.0.1/$PORT) 2>/dev/null; then
-  exit 0
+# 直接问 macOS LaunchServices "Aria GUI 在不在" — 比 :8000 端口探测可靠.
+# (旧逻辑只 probe 端口, 但 zombie aria-agent 进程不带 GUI 也会占 :8000 →
+# skip launch → 用户看到 "Aria 不在".) osascript 不在 PATH 时降级为 0/1 noop.
+if command -v osascript >/dev/null 2>&1; then
+  APP_RUNNING="$(osascript -e 'application id "'"$ARIA_BUNDLE_ID"'" is running' 2>/dev/null || echo "")"
+  if [ "$APP_RUNNING" = "true" ]; then
+    exit 0
+  fi
 fi
 
 # 1. LaunchServices by bundle id (推荐路径, 用户至少打开过一次 Aria 就 work)
