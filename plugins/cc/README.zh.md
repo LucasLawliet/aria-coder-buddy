@@ -9,10 +9,10 @@ Claude Code plugin, 把 CC session 生命周期事件桥接到运行在 `http://
 ## 功能
 
 - **Hook**: `SessionStart` / `UserPromptSubmit` / `Stop` / `StopFailure` / `PreToolUse` / `PostToolUse` / `Notification` / `PermissionRequest` → POST 事件元数据给 aria-agent.
-- **Slash command**:
+- **Slash command** (唯一控制 app 生命周期的入口):
   - `/aria-awake` — Aria.app 没开就拉起来, 然后发 wake 事件
-  - `/aria-sleep` — 显式 sleep (CC 没 SessionEnd hook, 这是唯一显式入眠方式)
-- **启动**: `SessionStart` 跑 `bin/ensure-aria.sh` — 探测 `:8000`; 如果 aria-agent 不在则后台 spawn.
+  - `/aria-sleep` — 发道别事件让头像播告别动画, 等 1s 后 graceful quit Aria.app
+- **Hook 行为**: Aria.app 没在跑时, 其它 hook (Stop / UserPromptSubmit / PreToolUse...) 都是 `curl --max-time 0.2` 打到关闭的端口, 静默 timeout. 用户在 CC 里输入任何内容**都不会**拉起 Aria.app — 只有 `/aria-awake` 会.
 
 ## 隐私
 
@@ -47,9 +47,11 @@ cd /path/to/aria/Server && uv run aria-agent start
 
 **3. 正常用 Claude Code** — 每次 prompt / tool / stop 都触发 hook → POST 到 `:8000`. 头像自动反应, 不需要做别的.
 
-**4. Slash command** (需要手动控制时):
-- `/aria-awake` — Aria.app 没开就拉起来, 然后发 wake 事件 (SessionStart 时已经自动跑一次)
-- `/aria-sleep` — 让她去睡 (头像播道别动画, 进程不退出)
+**4. Slash command** (唯一控制 app 生命周期的方式):
+- `/aria-awake` — Aria.app 没开就拉起来, 然后发 wake 事件
+- `/aria-sleep` — graceful quit (头像播道别动画, 进程退出)
+
+Aria.app **没在跑**时, 普通 hook (Stop / UserPromptSubmit...) 打到关闭的 `:8000` 静默 timeout — 不会偷偷拉起 app. 想让她出来用 `/aria-awake`.
 
 ## 备选安装 (本地 clone, 不走 marketplace)
 

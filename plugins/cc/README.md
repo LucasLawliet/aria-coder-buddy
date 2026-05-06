@@ -9,10 +9,10 @@ The plugin is intentionally minimal: declarative `hooks/hooks.json` + a couple o
 ## What it does
 
 - **Hooks**: `SessionStart` / `UserPromptSubmit` / `Stop` / `StopFailure` / `PreToolUse` / `PostToolUse` / `Notification` / `PermissionRequest` → POST event metadata to aria-agent.
-- **Slash commands**:
-  - `/aria-awake` — launches Aria.app if not running, then fires the wake event
-  - `/aria-sleep` — explicit sleep (CC has no SessionEnd hook, so this is the only way)
-- **Bootstrap**: `SessionStart` runs `bin/ensure-aria.sh` — probes `:8000`; if no aria-agent, spawns it detached.
+- **Slash commands** (the only entry points that touch the app lifecycle):
+  - `/aria-awake` — launch Aria.app if not running, then send a wake event
+  - `/aria-sleep` — send a farewell event so the avatar can play a goodbye animation, wait 1s, then graceful quit Aria.app
+- **Hook posture**: when Aria.app is **not running**, every other hook (Stop, UserPromptSubmit, PreToolUse, …) just `curl --max-time 0.2` to a closed port and silently times out. Nothing the user types in CC can launch Aria.app — only `/aria-awake` does.
 
 ## Privacy
 
@@ -47,9 +47,11 @@ cd /path/to/aria/Server && uv run aria-agent start
 
 **3. Use Claude Code normally** — every prompt, tool use, and stop fires hooks → POSTs to `:8000`. The avatar reacts. No further action needed.
 
-**4. Slash commands** (when you want explicit control):
-- `/aria-awake` — launch Aria.app if it's not running, then wake the avatar (SessionStart already does this once at the start of every session)
-- `/aria-sleep` — let her go to sleep (avatar plays farewell, process stays warm)
+**4. Slash commands** (the only way to control the app lifecycle):
+- `/aria-awake` — launch Aria.app if it's not running, then wake the avatar
+- `/aria-sleep` — graceful quit (avatar plays farewell, then app exits)
+
+When Aria.app is **not running**, regular CC hooks (Stop, UserPromptSubmit, …) post events to a closed `:8000` and silently time out — they will not launch the app behind your back. Use `/aria-awake` when you want her around.
 
 ## Alternative install (local clone, skip marketplace)
 

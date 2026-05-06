@@ -6,11 +6,6 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/bin/ensure-aria.sh",
-            "timeout": 5
-          },
-          {
-            "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/bin/post-event.sh wake",
             "timeout": 1
           }
