@@ -10,7 +10,7 @@
       "name": "aria-cc-plugin",
       "source": "./plugins/cc",
       "description": "Claude Code plugin that forwards CC session events (UserPromptSubmit, Stop, PreToolUse, etc.) to aria-agent so the desktop avatar reacts in real time.",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "author": {
         "name": "Lucas Lu",
         "email": "real.lawlietlu@gmail.com"

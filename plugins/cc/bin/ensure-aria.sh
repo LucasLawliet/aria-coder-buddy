@@ -53,6 +53,22 @@ for path in \
   fi
 done
 
-# 3. 都没找到 — 静默 (CC 体验优先)
-echo "[ensure-aria] Aria.app 未找到 (bundle id 未注册 + 常见路径都没). 用户需手动打开一次 Aria 或用 ARIA_BUNDLE_ID env 指定" >&2
+# 3. 都没找到 → 拉 latest.json 拿到 download_url, 用浏览器 (open) 拉起下载
+#    Aria.app 没装的用户首次跑 /aria-awake, 自动获得 zip 下载 (macOS Safari /
+#    默认浏览器自动 unzip + 提示拖到 /Applications/). 跟 CC plugin install 一行
+#    搭一起做到 "两条命令完整 onboarding" UX.
+LATEST_URL="${ARIA_LATEST_URL:-https://aria-release.oss-cn-beijing.aliyuncs.com/latest.json}"
+DOWNLOAD_URL=""
+if command -v curl >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
+  DOWNLOAD_URL="$(curl -fsSL --max-time 5 "$LATEST_URL" 2>/dev/null \
+    | python3 -c "import json,sys; print(json.load(sys.stdin).get('download_url',''))" 2>/dev/null \
+    || echo "")"
+fi
+
+if [ -n "$DOWNLOAD_URL" ]; then
+  echo "[ensure-aria] Aria.app 未安装. 浏览器打开下载链接 → $DOWNLOAD_URL" >&2
+  open "$DOWNLOAD_URL"
+else
+  echo "[ensure-aria] Aria.app 未安装且 latest.json 拉不到 ($LATEST_URL). 手动从 https://aria-release.oss-cn-beijing.aliyuncs.com/ 下载" >&2
+fi
 exit 0

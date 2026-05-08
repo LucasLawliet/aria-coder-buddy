@@ -10,9 +10,10 @@ The plugin is intentionally minimal: declarative `hooks/hooks.json` + a couple o
 
 - **Hooks**: `SessionStart` / `UserPromptSubmit` / `Stop` / `StopFailure` / `PreToolUse` / `PostToolUse` / `Notification` / `PermissionRequest` → POST event metadata to aria-agent.
 - **Slash commands** (the only entry points that touch the app lifecycle):
-  - `/aria-awake` — launch Aria.app if not running, then send a wake event
+  - `/aria-awake` — (1) self-update plugin from marketplace mirror in background, (2) launch Aria.app if installed, or **open the browser to the official download** if not yet installed, (3) send a wake event
   - `/aria-sleep` — send a farewell event so the avatar can play a goodbye animation, wait 1s, then graceful quit Aria.app
 - **Hook posture**: when Aria.app is **not running**, every other hook (Stop, UserPromptSubmit, PreToolUse, …) just `curl --max-time 0.2` to a closed port and silently times out. Nothing the user types in CC can launch Aria.app — only `/aria-awake` does.
+- **Self-update**: `/aria-awake` runs `git pull` on the marketplace mirror (`~/.claude/plugins/marketplaces/aria-coder-buddy`) in the background. New plugin code takes effect on next Claude Code session restart. No interruption to current session.
 
 ## Privacy
 

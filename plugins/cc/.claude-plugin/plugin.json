@@ -1,6 +1,6 @@
 {
   "name": "aria-cc-plugin",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Bridge Claude Code session events to the Aria desktop avatar (aria-agent on :8000).",
   "author": {
     "name": "Lucas Lu",

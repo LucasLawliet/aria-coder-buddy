@@ -10,9 +10,10 @@ Claude Code plugin, 把 CC session 生命周期事件桥接到运行在 `http://
 
 - **Hook**: `SessionStart` / `UserPromptSubmit` / `Stop` / `StopFailure` / `PreToolUse` / `PostToolUse` / `Notification` / `PermissionRequest` → POST 事件元数据给 aria-agent.
 - **Slash command** (唯一控制 app 生命周期的入口):
-  - `/aria-awake` — Aria.app 没开就拉起来, 然后发 wake 事件
+  - `/aria-awake` — (1) 后台 git pull 自更新 plugin, (2) 拉起 Aria.app, 没装则**自动打开浏览器跳官方下载页**, (3) 发 wake 事件
   - `/aria-sleep` — 发道别事件让头像播告别动画, 等 1s 后 graceful quit Aria.app
 - **Hook 行为**: Aria.app 没在跑时, 其它 hook (Stop / UserPromptSubmit / PreToolUse...) 都是 `curl --max-time 0.2` 打到关闭的端口, 静默 timeout. 用户在 CC 里输入任何内容**都不会**拉起 Aria.app — 只有 `/aria-awake` 会.
+- **自更新**: `/aria-awake` 后台 `git pull` marketplace mirror (`~/.claude/plugins/marketplaces/aria-coder-buddy`). 新 plugin 代码下次 CC session 启动时生效, 不打断当前 session.
 
 ## 隐私
 
