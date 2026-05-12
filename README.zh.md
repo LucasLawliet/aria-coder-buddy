@@ -8,11 +8,11 @@
 
 | Agent | 路径 | 状态 |
 |---|---|---|
-| Claude Code | `plugins/cc/` | ✅ 可用 (v0.1.0) |
+| Claude Code | `plugins/cc/` | ✅ 可用 (v0.1.7) |
 | OpenAI Codex CLI | `plugins/codex/` | ⏳ 计划中 |
 | Kimi / Moonshot | `plugins/kimi/` | ⏳ 计划中 |
 
-每个子目录是一个独立的、对应 agent plugin 格式的 plugin. 所有 plugin 都 POST 到同一后端 — `aria-agent` server, 它是 **Aria 桌面应用** 内置的 Python 服务 (公开发布链接待补; 当前版本未公开).
+每个子目录是一个独立的、对应 agent plugin 格式的 plugin. 所有 plugin 都 POST 到同一后端 — `aria-agent` server, 它是 **Aria 桌面应用** 内置的 Python 服务 (macOS Apple Silicon).
 
 ## 整体架构
 
@@ -41,44 +41,70 @@ Plugin 转发的是**事件元数据** (`kind` / `outcome` / `tool_name` / `noti
 
 如果不开 Aria 桌面应用, `:8000` 没人监听 — plugin 所有 POST 都静默超时, **不消耗任何 token**.
 
-## 安装
+## 首次安装 (复制下面整段贴进 Claude Code)
 
-### 一键 (复制下面整段贴进 Claude Code)
-
-最省事路径 — 把这段提示词贴进 Claude Code 的对话, 它会引导你走完安装:
+最省事路径 — 把这段贴进 Claude Code 对话, 它会带你下 Aria 桌面应用 + 装 plugin + 首次启动. 之后所有 session 都直接 `/aria-awake`.
 
 ```
-帮我装 aria-coder-buddy plugin (Aria 桌面 avatar 桥接).
+帮我从 https://github.com/LucasLawliet/aria-coder-buddy 装 Aria 桌面 avatar +
+aria-coder-buddy plugin. 按顺序做:
 
-仓库在 https://github.com/LucasLawliet/aria-coder-buddy, 走 Claude Code 的
-marketplace 机制. 流程:
+1. 下载 + 安装 Aria.app (macOS Apple Silicon, ~250 MB):
+   - 用 `gh release view --repo LucasLawliet/aria-coder-buddy --json assets --jq '.assets[] | select(.name|startswith("aria-")) | .browser_download_url'`
+     拿到最新 zip URL, 然后 curl -L -o /tmp/aria.zip <url>
+   - mkdir -p /tmp/aria-extract && unzip -oq /tmp/aria.zip -d /tmp/aria-extract/
+   - osascript -e 'tell application id "com.sensebeing.aria" to quit' 2>/dev/null || true
+   - sleep 2 && pkill -9 -f "/aria\.app|uvicorn main:app|AriaFlutterBridge" 2>/dev/null || true
+   - rm -rf /Applications/aria.app
+   - cp -R /tmp/aria-extract/aria.app /Applications/aria.app
+   - xattr -dr com.apple.quarantine /Applications/aria.app 2>/dev/null || true
+   - 验证: defaults read /Applications/aria.app/Contents/Info CFBundleShortVersionString
+   - 告诉我装的是哪个版本.
 
-1. 告诉我应该在 CC 里敲哪两条 slash command 完成安装 — 一条添加
-   marketplace LucasLawliet/aria-coder-buddy, 一条从 marketplace 装
-   aria-cc-plugin.
-2. 我敲完反馈给你, 你帮我验证装好了 — 查 ~/.claude/settings.json 或 plugin 列表.
-3. 询问我 Aria 桌面应用安装在哪里 (它内置 aria-agent server; 当前可能尚未公开
-   发布, 没有就跳过这步). 我有的话, 帮我把 `export ARIA_AGENT_DIR=<路径>`
-   写到我的 shell rc.
-4. 告诉我下次 CC session 启动时预期看到什么.
+2. 告诉我下面这两条 slash command 在 Claude Code 里手敲 (你不能代我敲):
+     /plugin marketplace add LucasLawliet/aria-coder-buddy
+     /plugin install aria-cc-plugin@aria-coder-buddy
+   等我确认两条都成功了.
+
+3. 我确认后, 帮我验证 plugin 装好了 — 查 ~/.claude/plugins/ 或 plugin 列表.
+
+4. 首次启动 Aria 桌面应用:
+     open -b com.sensebeing.aria
+   第一次启动会下载 ~400 MB 的 3D 角色资源 (90-120 秒), 慢. 告诉我等角色出现.
+
+5. 角色出现后, 告诉我以后只要在 Claude Code 里敲 /aria-awake 就能拉她回来,
+   /aria-sleep 让她去睡 (进程保活下次拉起更快).
 ```
 
-CC 不能自己触发 slash command, 所以第 1, 2 步还得你手动敲 — 但其它 (验证 / 环境变量配置) CC 全包.
+装完之后 **所有后续 session** — 只要 `/aria-awake` 她就回来.
 
-### 手动
+### 手动 (不走上面 prompt)
 
 ```
+# 1. 下载 + 安装 Aria.app
+gh release download --repo LucasLawliet/aria-coder-buddy --pattern 'aria-*.zip' --output /tmp/aria.zip
+mkdir -p /tmp/aria-extract && unzip -oq /tmp/aria.zip -d /tmp/aria-extract/
+rm -rf /Applications/aria.app && cp -R /tmp/aria-extract/aria.app /Applications/aria.app
+xattr -dr com.apple.quarantine /Applications/aria.app 2>/dev/null || true
+
+# 2. 在 Claude Code 里敲:
 /plugin marketplace add LucasLawliet/aria-coder-buddy
 /plugin install aria-cc-plugin@aria-coder-buddy
+
+# 3. 首次启动:
+open -b com.sensebeing.aria
+# (等 ~2 分钟首次下 3D 资源)
 ```
 
-之后想升级:
+之后想升级 plugin:
 
 ```
 /plugin marketplace update aria-coder-buddy
 ```
 
-**或者本地 clone 不走 marketplace**:
+Aria 桌面应用自己会原地升级 (启动时检查 GitHub releases, 有新版本自动下载替换).
+
+### 备选 — 本地 clone, 不走 marketplace
 
 ```bash
 git clone https://github.com/LucasLawliet/aria-coder-buddy ~/Documents/Projects/aria-coder-buddy
@@ -86,9 +112,16 @@ git clone https://github.com/LucasLawliet/aria-coder-buddy ~/Documents/Projects/
 /plugin add ~/Documents/Projects/aria-coder-buddy/plugins/cc
 ```
 
-还需要本地起 `aria-agent` 监听 `:8000` — 它在 Aria 桌面应用里 (待公开发布). 设了 `ARIA_AGENT_DIR=<aria-app-Server-目录>` 之后, plugin 的 `SessionStart` hook 会自动帮你 spawn.
-
 详见 [`plugins/cc/README.zh.md`](plugins/cc/README.zh.md), 含完整的 Claude Code 配置 / hook 列表 / slash command.
+
+## 日常使用
+
+| 命令 | 何时用 |
+|---|---|
+| `/aria-awake` | Aria 离线时拉她回来 (如果 Aria.app 没跑, 顺手帮你启动) |
+| `/aria-sleep` | 让她去睡 (avatar 播告别动画, 进程保活以便下次 `/aria-awake` 更快) |
+
+Plugin hook 在 Claude Code session 启动 / 工具调用 / 停止 / 等事件自动 fire — 你不打字 Aria 也会自己反应.
 
 ## 目录布局
 
@@ -110,4 +143,4 @@ MIT (具体见各 plugin 自己的 manifest).
 
 ## 关联
 
-- **Aria 桌面应用** — VRM 角色 + `aria-agent` server + behavior engine. 公开下载链接待补.
+- **Aria 桌面应用** (本仓 GitHub releases) — VRM 角色 + `aria-agent` server + behavior engine. macOS Apple Silicon. 启动时原地自动升级.

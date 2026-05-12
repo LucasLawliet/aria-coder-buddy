@@ -8,11 +8,11 @@ Bridge AI coding agents (Claude Code, OpenAI Codex, Kimi, ...) to the **Aria** d
 
 | Agent | Path | Status |
 |---|---|---|
-| Claude Code | `plugins/cc/` | ✅ working (v0.1.0) |
+| Claude Code | `plugins/cc/` | ✅ working (v0.1.7) |
 | OpenAI Codex CLI | `plugins/codex/` | ⏳ planned |
 | Kimi / Moonshot | `plugins/kimi/` | ⏳ planned |
 
-Each subdirectory is a self-contained plugin for that agent's plugin format. They all POST to the same backend — the `aria-agent` server, a separate Python service shipped with the **Aria desktop app** (TBD — public download link will be published here once available).
+Each subdirectory is a self-contained plugin for that agent's plugin format. They all POST to the same backend — the `aria-agent` server, a separate Python service shipped inside the **Aria desktop app** (macOS, Apple Silicon).
 
 ## How the parts fit
 
@@ -39,45 +39,75 @@ Plugins forward **event metadata** (`kind` / `outcome` / `tool_name` / `notifica
 
 If you do not run the Aria desktop app, port `8000` has no listener and every plugin POST silently fails — **zero token cost** when the avatar is offline.
 
-## Install
+## First-time install (paste this into Claude Code)
 
-### One-shot (paste this into Claude Code)
-
-The fastest path — paste this prompt into a Claude Code session and it'll walk you through:
+The fastest path — paste this prompt into a Claude Code session, it walks you through downloading the Aria desktop app + installing the plugin + first launch. Subsequent sessions just use `/aria-awake`.
 
 ```
-Help me install aria-coder-buddy plugin (Aria desktop avatar bridge).
+Help me install Aria desktop avatar + aria-coder-buddy plugin from
+https://github.com/LucasLawliet/aria-coder-buddy. Do these in order:
 
-The plugin lives at https://github.com/LucasLawliet/aria-coder-buddy and ships
-through Claude Code's marketplace mechanism. Steps:
+1. Download + install Aria.app (macOS Apple Silicon, ~250 MB):
+   - curl -L -o /tmp/aria.zip https://github.com/LucasLawliet/aria-coder-buddy/releases/latest/download/aria-*.zip
+     (use `gh release view --repo LucasLawliet/aria-coder-buddy --json assets --jq '.assets[] | select(.name|startswith("aria-")) | .browser_download_url'`
+      to get the exact url, then curl -L -o /tmp/aria.zip <url>)
+   - mkdir -p /tmp/aria-extract && unzip -oq /tmp/aria.zip -d /tmp/aria-extract/
+   - osascript -e 'tell application id "com.sensebeing.aria" to quit' 2>/dev/null || true
+   - sleep 2 && pkill -9 -f "/aria\.app|uvicorn main:app|AriaFlutterBridge" 2>/dev/null || true
+   - rm -rf /Applications/aria.app
+   - cp -R /tmp/aria-extract/aria.app /Applications/aria.app
+   - xattr -dr com.apple.quarantine /Applications/aria.app 2>/dev/null || true
+   - Verify: defaults read /Applications/aria.app/Contents/Info CFBundleShortVersionString
+   - Tell me what version got installed.
 
-1. Tell me which two slash commands I should run inside CC to install:
-   one to add the marketplace LucasLawliet/aria-coder-buddy, and one to
-   install the aria-cc-plugin from it.
-2. After I report back, verify the plugin landed by checking
-   ~/.claude/settings.json or the plugin list.
-3. Ask me where the Aria desktop app is installed (it bundles aria-agent;
-   may not be publicly released yet — if so, just skip this step). If
-   I have it, append `export ARIA_AGENT_DIR=<path>` to my shell rc.
-4. Tell me what to expect on the next CC session start.
+2. Tell me to run these two slash commands inside Claude Code (you cannot
+   trigger them yourself, I have to type them):
+     /plugin marketplace add LucasLawliet/aria-coder-buddy
+     /plugin install aria-cc-plugin@aria-coder-buddy
+   Wait for my confirmation that both succeeded.
+
+3. After I confirm, verify the plugin landed by checking
+   ~/.claude/plugins/ or the active plugin list.
+
+4. First launch the Aria desktop app via:
+     open -b com.sensebeing.aria
+   First run downloads ~400 MB of 3D avatar assets (90-120 s). It will be
+   slow the first time. Tell me to wait for the character to appear.
+
+5. After the character is visible, tell me from now on I just run /aria-awake
+   inside Claude Code to bring her back when she's offline, and /aria-sleep
+   to put her to sleep gently (process stays warm).
 ```
 
-CC can't trigger its own slash commands programmatically, so steps 1+2 still need you to type them — but everything else (verification, env setup) it handles for you.
+After install, **all subsequent sessions** — just run `/aria-awake` and she comes back.
 
-### Manual
+### Manual install (without the prompt)
 
 ```
+# 1. Download + install Aria.app
+gh release download --repo LucasLawliet/aria-coder-buddy --pattern 'aria-*.zip' --output /tmp/aria.zip
+mkdir -p /tmp/aria-extract && unzip -oq /tmp/aria.zip -d /tmp/aria-extract/
+rm -rf /Applications/aria.app && cp -R /tmp/aria-extract/aria.app /Applications/aria.app
+xattr -dr com.apple.quarantine /Applications/aria.app 2>/dev/null || true
+
+# 2. Inside Claude Code, run:
 /plugin marketplace add LucasLawliet/aria-coder-buddy
 /plugin install aria-cc-plugin@aria-coder-buddy
+
+# 3. First launch:
+open -b com.sensebeing.aria
+# (wait ~2 min for first-run 3D asset download)
 ```
 
-To update later:
+To update plugin later:
 
 ```
 /plugin marketplace update aria-coder-buddy
 ```
 
-**Alternative — local clone, no marketplace**:
+The Aria desktop app updates itself in-place (checks GitHub releases on launch, downloads + swaps when a new version ships).
+
+### Alternative — local clone, no marketplace
 
 ```bash
 git clone https://github.com/LucasLawliet/aria-coder-buddy ~/Documents/Projects/aria-coder-buddy
@@ -85,9 +115,16 @@ git clone https://github.com/LucasLawliet/aria-coder-buddy ~/Documents/Projects/
 /plugin add ~/Documents/Projects/aria-coder-buddy/plugins/cc
 ```
 
-You also need `aria-agent` running locally on `:8000` — it ships with the Aria desktop app (TBD). Set `ARIA_AGENT_DIR=<aria-app-Server-dir>` and the plugin's `SessionStart` hook will spawn it for you.
-
 See [`plugins/cc/README.md`](plugins/cc/README.md) for the full Claude Code setup, hook list, and slash commands.
+
+## Daily use
+
+| Command | When |
+|---|---|
+| `/aria-awake` | Bring Aria back when she's offline (also auto-launches Aria.app if not running) |
+| `/aria-sleep` | Send her to sleep (avatar plays farewell, process stays warm for fast `/aria-awake`) |
+
+Plugin hooks fire automatically on Claude Code session start / tool use / stop / etc. — Aria reacts without you typing anything.
 
 ## Layout
 
@@ -109,4 +146,4 @@ MIT (see individual plugin manifests).
 
 ## Related
 
-- **Aria desktop app** — VRM character + `aria-agent` server + behavior engine. Public download TBD.
+- **Aria desktop app** (this repo's GitHub releases) — VRM character + `aria-agent` server + behavior engine. macOS Apple Silicon. In-place auto-update on launch.
