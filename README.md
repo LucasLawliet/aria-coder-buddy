@@ -4,6 +4,15 @@
 
 Bridge AI coding agents (Claude Code, OpenAI Codex, Kimi, ...) to the **Aria** desktop avatar — your VRM character reacts to your coding session in real time. Type a prompt, watch her think; finish a task, watch her cheer; idle too long, watch her wander off.
 
+## ⚡ Quickstart — paste this into Claude Code
+
+```
+Install Aria desktop avatar by reading and following the "First-time install" section
+of https://github.com/LucasLawliet/aria-coder-buddy/blob/main/README.md
+```
+
+Claude Code will fetch the README, follow the install steps (download .app, guide you through 2 slash commands, first launch). After that, just `/aria-awake` to bring her back.
+
 ## Status
 
 | Agent | Path | Status |

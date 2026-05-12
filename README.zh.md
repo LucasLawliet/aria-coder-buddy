@@ -4,6 +4,15 @@
 
 把 AI coding agent (Claude Code / OpenAI Codex / Kimi / ...) 桥接到 **Aria** 桌面虚拟形象 — 让 VRM 角色实时回应你的写代码过程: 你敲提示她在思考, 任务完成她在欢呼, 你太久没动她跑去看书发呆.
 
+## ⚡ 一键安装 — 复制这段贴进 Claude Code
+
+```
+按照 https://github.com/LucasLawliet/aria-coder-buddy/blob/main/README.zh.md
+的「首次安装」段落, 帮我装 Aria 桌面虚拟形象.
+```
+
+Claude Code 会 fetch README, 按 install 步骤走 (下 .app、引导你敲 2 条 slash command、首次启动). 装完之后只要 `/aria-awake` 就能拉她回来.
+
 ## 状态
 
 | Agent | 路径 | 状态 |
