@@ -78,24 +78,38 @@ https://github.com/LucasLawliet/aria-coder-buddy. Do these in order:
    - Verify: defaults read /Applications/aria.app/Contents/Info CFBundleShortVersionString
    - Tell me what version got installed.
 
-2. Tell me to run these two slash commands inside Claude Code (you cannot
-   trigger them yourself, I have to type them):
-     /plugin marketplace add LucasLawliet/aria-coder-buddy
-     /plugin install aria-cc-plugin@aria-coder-buddy
-   Wait for my confirmation that both succeeded.
+2. Patch `~/.claude/settings.json` to auto-install the plugin (CC reads
+   enabledPlugins + extraKnownMarketplaces on session start, no slash command
+   needed). Use python to safely merge:
+   ```python
+   python3 << 'EOF'
+   import json, os
+   p = os.path.expanduser('~/.claude/settings.json')
+   if os.path.exists(p):
+       with open(p) as f: data = json.load(f)
+   else:
+       data = {}
+   data.setdefault('enabledPlugins', {})['aria-cc-plugin@aria-coder-buddy'] = True
+   data.setdefault('extraKnownMarketplaces', {})['aria-coder-buddy'] = {
+       'source': {'source': 'github', 'repo': 'LucasLawliet/aria-coder-buddy'}
+   }
+   with open(p, 'w') as f: json.dump(data, f, indent=2)
+   print('settings.json patched')
+   EOF
+   ```
+   Tell me the patch landed. The plugin will install itself when Claude Code
+   next starts a session (no manual /plugin commands needed).
 
-3. After I confirm, verify the plugin landed by checking
-   ~/.claude/plugins/installed_plugins.json — look for
-   "aria-cc-plugin@aria-coder-buddy" entry.
-
-4. First launch the Aria desktop app via:
+3. Launch the Aria desktop app first (plugin auto-loads on next CC restart,
+   but the app launches independently):
      open -b com.sensebeing.aria
    First run downloads ~400 MB of 3D avatar assets (90-120 s). It will be
    slow the first time. Tell me to wait for the character to appear.
 
-5. After the character is visible, tell me from now on I just run /aria-awake
+4. After the character is visible, tell me from now on I just run /aria-awake
    inside Claude Code to bring her back when she's offline, and /aria-sleep
-   to put her to sleep gently (process stays warm).
+   to put her to sleep gently. (These slash commands become available the
+   next time I start a new CC session — current session won't have them yet.)
 ```
 
 After install, **all subsequent sessions** — just run `/aria-awake` and she comes back.

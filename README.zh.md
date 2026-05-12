@@ -79,20 +79,34 @@ aria-coder-buddy plugin. 按顺序做:
    - 验证: defaults read /Applications/aria.app/Contents/Info CFBundleShortVersionString
    - 告诉我装的是哪个版本.
 
-2. 告诉我下面这两条 slash command 在 Claude Code 里手敲 (你不能代我敲):
-     /plugin marketplace add LucasLawliet/aria-coder-buddy
-     /plugin install aria-cc-plugin@aria-coder-buddy
-   等我确认两条都成功了.
+2. Patch `~/.claude/settings.json` 让 plugin 下次 CC session 启动自动装
+   (CC 启动看 enabledPlugins + extraKnownMarketplaces 自动 install, 不需要
+   手敲 slash command). 用 python 安全合并:
+   ```python
+   python3 << 'EOF'
+   import json, os
+   p = os.path.expanduser('~/.claude/settings.json')
+   if os.path.exists(p):
+       with open(p) as f: data = json.load(f)
+   else:
+       data = {}
+   data.setdefault('enabledPlugins', {})['aria-cc-plugin@aria-coder-buddy'] = True
+   data.setdefault('extraKnownMarketplaces', {})['aria-coder-buddy'] = {
+       'source': {'source': 'github', 'repo': 'LucasLawliet/aria-coder-buddy'}
+   }
+   with open(p, 'w') as f: json.dump(data, f, indent=2)
+   print('settings.json patched')
+   EOF
+   ```
+   告诉我 patch 成功. 下次 CC 启动 session plugin 会自动装.
 
-3. 我确认后, 帮我验证 plugin 装好了 — 查 ~/.claude/plugins/installed_plugins.json
-   看有没有 "aria-cc-plugin@aria-coder-buddy" entry.
-
-4. 首次启动 Aria 桌面应用:
+3. 首次启动 Aria 桌面应用 (plugin 下次 CC 启动才装好, 但 .app 启动跟它无关):
      open -b com.sensebeing.aria
    第一次启动会下载 ~400 MB 的 3D 角色资源 (90-120 秒), 慢. 告诉我等角色出现.
 
-5. 角色出现后, 告诉我以后只要在 Claude Code 里敲 /aria-awake 就能拉她回来,
-   /aria-sleep 让她去睡 (进程保活下次拉起更快).
+4. 角色出现后, 告诉我以后只要在 Claude Code 里敲 /aria-awake 就能拉她回来,
+   /aria-sleep 让她去睡 (进程保活下次拉起更快). 这两条 slash command 下次新开
+   CC session 才能用, 当前 session 还没有.
 ```
 
 装完之后 **所有后续 session** — 只要 `/aria-awake` 她就回来.
