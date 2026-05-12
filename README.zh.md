@@ -49,13 +49,22 @@ Plugin 转发的是**事件元数据** (`kind` / `outcome` / `tool_name` / `noti
 帮我从 https://github.com/LucasLawliet/aria-coder-buddy 装 Aria 桌面 avatar +
 aria-coder-buddy plugin. 按顺序做:
 
+0. **先检查旧版 + 僵尸进程** (装新版前必须做, 否则 cp 会因为 "Resource busy" 失败):
+   - ls -la /Applications/aria.app 2>/dev/null  (有装过吗)
+   - pgrep -fl "/aria\.app|uvicorn main:app|AriaFlutterBridge|aria-agent"  (有僵尸进程吗)
+   - 报告: 旧版本号 + 残留进程列表.
+   - 有旧版的话清掉:
+     * osascript -e 'tell application id "com.sensebeing.aria" to quit' 2>/dev/null || true
+     * sleep 2 && pkill -9 -f "/aria\.app|uvicorn main:app|AriaFlutterBridge|aria-agent" 2>/dev/null || true
+     * rm -rf /Applications/aria.app
+     * rm -rf "$HOME/Library/Caches/Aria"  (老 Unity bundles, ~1GB; 会重下)
+     * rm -rf "$HOME/Library/Application Support/Aria"  (老 aria-agent runtime)
+   - 验证清干净: ls /Applications/aria.app 2>&1 应该报 "No such file"
+
 1. 下载 + 安装 Aria.app (macOS Apple Silicon, ~250 MB):
-   - 用 `gh release view --repo LucasLawliet/aria-coder-buddy --json assets --jq '.assets[] | select(.name|startswith("aria-")) | .browser_download_url'`
-     拿到最新 zip URL, 然后 curl -L -o /tmp/aria.zip <url>
+   - 拿 URL: gh release view --repo LucasLawliet/aria-coder-buddy --json assets --jq '.assets[] | select(.name|startswith("aria-")) | .browser_download_url'
+   - curl -L -o /tmp/aria.zip <url>
    - mkdir -p /tmp/aria-extract && unzip -oq /tmp/aria.zip -d /tmp/aria-extract/
-   - osascript -e 'tell application id "com.sensebeing.aria" to quit' 2>/dev/null || true
-   - sleep 2 && pkill -9 -f "/aria\.app|uvicorn main:app|AriaFlutterBridge" 2>/dev/null || true
-   - rm -rf /Applications/aria.app
    - cp -R /tmp/aria-extract/aria.app /Applications/aria.app
    - xattr -dr com.apple.quarantine /Applications/aria.app 2>/dev/null || true
    - 验证: defaults read /Applications/aria.app/Contents/Info CFBundleShortVersionString
@@ -66,7 +75,8 @@ aria-coder-buddy plugin. 按顺序做:
      /plugin install aria-cc-plugin@aria-coder-buddy
    等我确认两条都成功了.
 
-3. 我确认后, 帮我验证 plugin 装好了 — 查 ~/.claude/plugins/ 或 plugin 列表.
+3. 我确认后, 帮我验证 plugin 装好了 — 查 ~/.claude/plugins/installed_plugins.json
+   看有没有 "aria-cc-plugin@aria-coder-buddy" entry.
 
 4. 首次启动 Aria 桌面应用:
      open -b com.sensebeing.aria

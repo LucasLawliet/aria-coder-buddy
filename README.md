@@ -47,14 +47,23 @@ The fastest path — paste this prompt into a Claude Code session, it walks you 
 Help me install Aria desktop avatar + aria-coder-buddy plugin from
 https://github.com/LucasLawliet/aria-coder-buddy. Do these in order:
 
+0. **Check for old install + zombie processes FIRST** (must do before step 1
+   or cp will fail with "Resource busy"):
+   - ls -la /Applications/aria.app 2>/dev/null  (check existing install)
+   - pgrep -fl "/aria\.app|uvicorn main:app|AriaFlutterBridge|aria-agent"  (zombies?)
+   - Report findings: existing version + any live processes.
+   - If existing install found:
+     * osascript -e 'tell application id "com.sensebeing.aria" to quit' 2>/dev/null || true
+     * sleep 2 && pkill -9 -f "/aria\.app|uvicorn main:app|AriaFlutterBridge|aria-agent" 2>/dev/null || true
+     * rm -rf /Applications/aria.app
+     * rm -rf "$HOME/Library/Caches/Aria"  (old Unity bundles, ~1GB; will redownload)
+     * rm -rf "$HOME/Library/Application Support/Aria"  (old aria-agent runtime)
+   - Verify clean: ls /Applications/aria.app 2>&1 should report "No such file"
+
 1. Download + install Aria.app (macOS Apple Silicon, ~250 MB):
-   - curl -L -o /tmp/aria.zip https://github.com/LucasLawliet/aria-coder-buddy/releases/latest/download/aria-*.zip
-     (use `gh release view --repo LucasLawliet/aria-coder-buddy --json assets --jq '.assets[] | select(.name|startswith("aria-")) | .browser_download_url'`
-      to get the exact url, then curl -L -o /tmp/aria.zip <url>)
+   - Get exact URL: gh release view --repo LucasLawliet/aria-coder-buddy --json assets --jq '.assets[] | select(.name|startswith("aria-")) | .browser_download_url'
+   - curl -L -o /tmp/aria.zip <url>
    - mkdir -p /tmp/aria-extract && unzip -oq /tmp/aria.zip -d /tmp/aria-extract/
-   - osascript -e 'tell application id "com.sensebeing.aria" to quit' 2>/dev/null || true
-   - sleep 2 && pkill -9 -f "/aria\.app|uvicorn main:app|AriaFlutterBridge" 2>/dev/null || true
-   - rm -rf /Applications/aria.app
    - cp -R /tmp/aria-extract/aria.app /Applications/aria.app
    - xattr -dr com.apple.quarantine /Applications/aria.app 2>/dev/null || true
    - Verify: defaults read /Applications/aria.app/Contents/Info CFBundleShortVersionString
@@ -67,7 +76,8 @@ https://github.com/LucasLawliet/aria-coder-buddy. Do these in order:
    Wait for my confirmation that both succeeded.
 
 3. After I confirm, verify the plugin landed by checking
-   ~/.claude/plugins/ or the active plugin list.
+   ~/.claude/plugins/installed_plugins.json — look for
+   "aria-cc-plugin@aria-coder-buddy" entry.
 
 4. First launch the Aria desktop app via:
      open -b com.sensebeing.aria
