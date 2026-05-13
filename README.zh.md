@@ -159,6 +159,8 @@ git clone https://github.com/LucasLawliet/aria-coder-buddy ~/Documents/Projects/
 |---|---|
 | `/aria-awake` | Aria 离线时拉她回来 (如果 Aria.app 没跑, 顺手帮你启动) |
 | `/aria-sleep` | 让她去睡 (avatar 播告别动画, 进程保活以便下次 `/aria-awake` 更快) |
+| `/aria-model` | 打开捏人界面 — 自定义体型 / 脸 / 头发 / 服装 |
+| `/aria-soul` | 跟 CC 对话改 Aria 的灵魂 (system prompt / persona) — 拉当前文本, 对话精炼, 保存 |
 
 Plugin hook 在 Claude Code session 启动 / 工具调用 / 停止 / 等事件自动 fire — 你不打字 Aria 也会自己反应.
 

@@ -162,6 +162,8 @@ See [`plugins/cc/README.md`](plugins/cc/README.md) for the full Claude Code setu
 |---|---|
 | `/aria-awake` | Bring Aria back when she's offline (also auto-launches Aria.app if not running) |
 | `/aria-sleep` | Send her to sleep (avatar plays farewell, process stays warm for fast `/aria-awake`) |
+| `/aria-model` | Open the character editor (捏人界面) — customize body / face / hair / outfit |
+| `/aria-soul` | Edit Aria's soul (system prompt / persona) via conversation — get current text, refine via dialog, save |
 
 Plugin hooks fire automatically on Claude Code session start / tool use / stop / etc. — Aria reacts without you typing anything.
 
