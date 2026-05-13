@@ -79,38 +79,19 @@ aria-coder-buddy plugin. 按顺序做:
    - 验证: defaults read /Applications/aria.app/Contents/Info CFBundleShortVersionString
    - 告诉我装的是哪个版本.
 
-2. 先 patch `~/.claude/settings.json` 作下次 session 兜底 (万一用户跳过 step 3
-   也能下次 CC 启动自动装):
-   ```python
-   python3 << 'EOF'
-   import json, os
-   p = os.path.expanduser('~/.claude/settings.json')
-   if os.path.exists(p):
-       with open(p) as f: data = json.load(f)
-   else:
-       data = {}
-   data.setdefault('enabledPlugins', {})['aria-cc-plugin@aria-coder-buddy'] = True
-   data.setdefault('extraKnownMarketplaces', {})['aria-coder-buddy'] = {
-       'source': {'source': 'github', 'repo': 'LucasLawliet/aria-coder-buddy'}
-   }
-   with open(p, 'w') as f: json.dump(data, f, indent=2)
-   print('settings.json patched')
-   EOF
-   ```
-   告诉我 patch 成功.
+2. 告诉我立刻在 Claude Code 里敲下面两条 slash command (这是唯一真正能装
+   plugin 的路径 — settings.json edit 不会触发 marketplace fetch + install,
+   CC 自己不能代敲 slash command):
+     /plugin marketplace add LucasLawliet/aria-coder-buddy
+     /plugin install aria-cc-plugin@aria-coder-buddy
+   等我确认两条都成功. 装完 /aria-awake / /aria-sleep + hook 当前 session
+   立即可用.
 
-3. 告诉我立刻在 Claude Code 里敲**一条** slash command 让 plugin 在当前
-   session 装好 (否则 /aria-awake / /aria-sleep 要下次 CC 启动才能用):
-     /reload-plugins
-   这条让 CC 重新 enumerate plugin — 读 step 2 patch 的 settings.json,
-   fetch marketplace, 装 aria-cc-plugin, 注册 /aria-awake / /aria-sleep +
-   hook. 你不能代敲 — slash command 只能用户手敲.
-
-4. 启动 Aria 桌面应用:
+3. 启动 Aria 桌面应用:
      open -b com.sensebeing.aria
    第一次启动会下载 ~400 MB 的 3D 角色资源 (90-120 秒). 告诉我等角色出现.
 
-5. 角色出现后, 告诉我以后用 /aria-awake 拉她回来, /aria-sleep 让她去睡.
+4. 角色出现后, 告诉我以后用 /aria-awake 拉她回来, /aria-sleep 让她去睡.
 ```
 
 装完之后 **所有后续 session** — 只要 `/aria-awake` 她就回来.

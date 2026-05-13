@@ -78,41 +78,21 @@ https://github.com/LucasLawliet/aria-coder-buddy. Do these in order:
    - Verify: defaults read /Applications/aria.app/Contents/Info CFBundleShortVersionString
    - Tell me what version got installed.
 
-2. Patch `~/.claude/settings.json` first (next-session fallback so plugin is
-   guaranteed installed even if user skips step 3):
-   ```python
-   python3 << 'EOF'
-   import json, os
-   p = os.path.expanduser('~/.claude/settings.json')
-   if os.path.exists(p):
-       with open(p) as f: data = json.load(f)
-   else:
-       data = {}
-   data.setdefault('enabledPlugins', {})['aria-cc-plugin@aria-coder-buddy'] = True
-   data.setdefault('extraKnownMarketplaces', {})['aria-coder-buddy'] = {
-       'source': {'source': 'github', 'repo': 'LucasLawliet/aria-coder-buddy'}
-   }
-   with open(p, 'w') as f: json.dump(data, f, indent=2)
-   print('settings.json patched')
-   EOF
-   ```
-   Tell me the patch landed.
+2. Tell me to run these two slash commands inside Claude Code NOW (these
+   are the only way to actually install the plugin — settings.json edits
+   alone don't trigger marketplace fetch + install, and CC cannot trigger
+   slash commands itself):
+     /plugin marketplace add LucasLawliet/aria-coder-buddy
+     /plugin install aria-cc-plugin@aria-coder-buddy
+   Wait for my confirmation that both succeeded. After install, /aria-awake
+   / /aria-sleep + hooks are available in the current session immediately.
 
-3. Tell me to run **one** slash command inside Claude Code NOW so the plugin
-   loads in the current session (without it the plugin only loads on next
-   CC session start):
-     /reload-plugins
-   This makes CC re-enumerate plugins — it reads the settings.json patch
-   from step 2, fetches the marketplace, installs aria-cc-plugin, and
-   registers /aria-awake / /aria-sleep + hooks. You cannot trigger
-   /reload-plugins yourself — it's user-typed only.
-
-4. Launch the Aria desktop app:
+3. Launch the Aria desktop app:
      open -b com.sensebeing.aria
    First run downloads ~400 MB of 3D avatar assets (90-120 s). Tell me to
    wait for the character to appear.
 
-5. After the character is visible, tell me from now on I run /aria-awake
+4. After the character is visible, tell me from now on I run /aria-awake
    to bring her back when she's offline, /aria-sleep to put her to sleep.
 ```
 
