@@ -78,22 +78,44 @@ https://github.com/LucasLawliet/aria-coder-buddy. Do these in order:
    - Verify: defaults read /Applications/aria.app/Contents/Info CFBundleShortVersionString
    - Tell me what version got installed.
 
-2. Tell me to run these two slash commands inside Claude Code NOW (these
-   are the only way to actually install the plugin — settings.json edits
-   alone don't trigger marketplace fetch + install, and CC cannot trigger
-   slash commands itself):
-     /plugin marketplace add LucasLawliet/aria-coder-buddy
-     /plugin install aria-cc-plugin@aria-coder-buddy
-   Wait for my confirmation that both succeeded. After install, /aria-awake
-   / /aria-sleep + hooks are available in the current session immediately.
+2. Install the plugin by physically cloning the marketplace + patching
+   `~/.claude/settings.json` (this mimics what `/plugin install` does
+   internally — CC reads these on startup and loads the plugin without
+   user typing any slash command):
+   ```bash
+   # Clone marketplace
+   mkdir -p "$HOME/.claude/plugins/marketplaces"
+   rm -rf "$HOME/.claude/plugins/marketplaces/aria-coder-buddy"
+   git clone https://github.com/LucasLawliet/aria-coder-buddy "$HOME/.claude/plugins/marketplaces/aria-coder-buddy"
+   ```
+   ```python
+   # Patch settings.json (enabledPlugins + extraKnownMarketplaces)
+   python3 << 'EOF'
+   import json, os
+   p = os.path.expanduser('~/.claude/settings.json')
+   data = json.load(open(p)) if os.path.exists(p) else {}
+   data.setdefault('enabledPlugins', {})['aria-cc-plugin@aria-coder-buddy'] = True
+   data.setdefault('extraKnownMarketplaces', {})['aria-coder-buddy'] = {
+       'source': {'source': 'github', 'repo': 'LucasLawliet/aria-coder-buddy'}
+   }
+   with open(p, 'w') as f: json.dump(data, f, indent=2)
+   print('settings.json patched')
+   EOF
+   ```
+   Tell me both finished.
 
 3. Launch the Aria desktop app:
      open -b com.sensebeing.aria
    First run downloads ~400 MB of 3D avatar assets (90-120 s). Tell me to
    wait for the character to appear.
 
-4. After the character is visible, tell me from now on I run /aria-awake
-   to bring her back when she's offline, /aria-sleep to put her to sleep.
+4. After the character is visible, tell me to **quit Claude Code (Cmd+Q)
+   and reopen** so the plugin loads in the next session. After reopening,
+   /aria-awake and /aria-sleep slash commands are available. Plugin hooks
+   (reacting to my coding events) also fire automatically.
+
+5. Confirm by telling me: from now on use /aria-awake to bring her back
+   when offline, /aria-sleep to send her to sleep.
 ```
 
 After install, **all subsequent sessions** — just run `/aria-awake` and she comes back.
