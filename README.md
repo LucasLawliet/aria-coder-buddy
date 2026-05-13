@@ -98,13 +98,14 @@ https://github.com/LucasLawliet/aria-coder-buddy. Do these in order:
    ```
    Tell me the patch landed.
 
-3. Tell me to run these two slash commands inside Claude Code NOW (so
-   /aria-awake / /aria-sleep work in the current session — without these
-   the plugin only loads on next CC session start):
-     /plugin marketplace add LucasLawliet/aria-coder-buddy
-     /plugin install aria-cc-plugin@aria-coder-buddy
-   Wait for my confirmation that both succeeded. You cannot trigger them
-   yourself — slash commands are user-typed only.
+3. Tell me to run **one** slash command inside Claude Code NOW so the plugin
+   loads in the current session (without it the plugin only loads on next
+   CC session start):
+     /reload-plugins
+   This makes CC re-enumerate plugins — it reads the settings.json patch
+   from step 2, fetches the marketplace, installs aria-cc-plugin, and
+   registers /aria-awake / /aria-sleep + hooks. You cannot trigger
+   /reload-plugins yourself — it's user-typed only.
 
 4. Launch the Aria desktop app:
      open -b com.sensebeing.aria

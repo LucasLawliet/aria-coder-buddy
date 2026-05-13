@@ -99,11 +99,12 @@ aria-coder-buddy plugin. 按顺序做:
    ```
    告诉我 patch 成功.
 
-3. 告诉我立刻在 Claude Code 里敲下面两条 slash command (让 plugin 在当前
-   session 也装好, 否则 /aria-awake / /aria-sleep 要下次 CC 启动才能用):
-     /plugin marketplace add LucasLawliet/aria-coder-buddy
-     /plugin install aria-cc-plugin@aria-coder-buddy
-   等我确认两条都成功. 你不能代敲 — slash command 只能用户手敲.
+3. 告诉我立刻在 Claude Code 里敲**一条** slash command 让 plugin 在当前
+   session 装好 (否则 /aria-awake / /aria-sleep 要下次 CC 启动才能用):
+     /reload-plugins
+   这条让 CC 重新 enumerate plugin — 读 step 2 patch 的 settings.json,
+   fetch marketplace, 装 aria-cc-plugin, 注册 /aria-awake / /aria-sleep +
+   hook. 你不能代敲 — slash command 只能用户手敲.
 
 4. 启动 Aria 桌面应用:
      open -b com.sensebeing.aria
