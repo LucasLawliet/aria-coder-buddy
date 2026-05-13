@@ -78,9 +78,8 @@ https://github.com/LucasLawliet/aria-coder-buddy. Do these in order:
    - Verify: defaults read /Applications/aria.app/Contents/Info CFBundleShortVersionString
    - Tell me what version got installed.
 
-2. Patch `~/.claude/settings.json` to auto-install the plugin (CC reads
-   enabledPlugins + extraKnownMarketplaces on session start, no slash command
-   needed). Use python to safely merge:
+2. Patch `~/.claude/settings.json` first (next-session fallback so plugin is
+   guaranteed installed even if user skips step 3):
    ```python
    python3 << 'EOF'
    import json, os
@@ -97,19 +96,23 @@ https://github.com/LucasLawliet/aria-coder-buddy. Do these in order:
    print('settings.json patched')
    EOF
    ```
-   Tell me the patch landed. The plugin will install itself when Claude Code
-   next starts a session (no manual /plugin commands needed).
+   Tell me the patch landed.
 
-3. Launch the Aria desktop app first (plugin auto-loads on next CC restart,
-   but the app launches independently):
+3. Tell me to run these two slash commands inside Claude Code NOW (so
+   /aria-awake / /aria-sleep work in the current session — without these
+   the plugin only loads on next CC session start):
+     /plugin marketplace add LucasLawliet/aria-coder-buddy
+     /plugin install aria-cc-plugin@aria-coder-buddy
+   Wait for my confirmation that both succeeded. You cannot trigger them
+   yourself — slash commands are user-typed only.
+
+4. Launch the Aria desktop app:
      open -b com.sensebeing.aria
-   First run downloads ~400 MB of 3D avatar assets (90-120 s). It will be
-   slow the first time. Tell me to wait for the character to appear.
+   First run downloads ~400 MB of 3D avatar assets (90-120 s). Tell me to
+   wait for the character to appear.
 
-4. After the character is visible, tell me from now on I just run /aria-awake
-   inside Claude Code to bring her back when she's offline, and /aria-sleep
-   to put her to sleep gently. (These slash commands become available the
-   next time I start a new CC session — current session won't have them yet.)
+5. After the character is visible, tell me from now on I run /aria-awake
+   to bring her back when she's offline, /aria-sleep to put her to sleep.
 ```
 
 After install, **all subsequent sessions** — just run `/aria-awake` and she comes back.
